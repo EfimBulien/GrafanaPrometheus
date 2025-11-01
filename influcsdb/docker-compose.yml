@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  influxdb:
+    image: influxdb:latest
+    restart: always
+    container_name: influxdb
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+      - etc_influxdb_data:/etc/influxdb2
+    environment:
+      - TZ=Europe/Moscow
+    networks:
+      - grafanaprometheus_monitoring
+
+  telegraf:
+    image: telegraf:latest
+    restart: always
+    container_name: telegraf
+    depends_on:
+      - influxdb
+    volumes:
+      - ./telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /sys:/rootfs/sys:ro
+      - /proc:/rootfs/proc:ro
+      - /etc:/rootfs/etc:ro
+    environment:
+      - TZ=Europe/Moscow
+      - HOST_SYS=/rootfs/sys
+      - HOST_ETC=/rootfs/etc
+      - HOST_PROC=/rootfs/proc
+    networks:
+      - grafanaprometheus_monitoring
+    privileged: true
+
+volumes:
+  influxdb_data:
+  etc_influxdb_data:
+
+networks:
+  grafanaprometheus_monitoring:
+    external: true
